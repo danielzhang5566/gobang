@@ -1,5 +1,7 @@
-//me初始化定义为true——黑棋
+//me初始化定义为true>>黑棋
+//也就是我方为黑棋，电脑为白棋
 var me = true;
+var isGameOver = false;
 var gobang = document.getElementById('canvas');
 var context = gobang.getContext('2d');
 
@@ -11,6 +13,63 @@ for (var i = 0; i < 15; i++) {
     for (var j = 0; j < 15; j++) {
         gobangBoard[i][j] = 0;
     }
+}
+
+//总赢法数组
+var wins = [];
+//初始化三维数组
+for (var i = 0; i < 15; i++) {
+    wins[i] = [];
+    for (var j = 0; j < 15; j++) {
+        wins[i][j] = [];
+    }
+}
+
+//赢法数
+var count = 0;
+//统计所有横线赢法
+for (var i = 0; i < 15; i++) {
+    for (var j = 0; j < 11; j++) {
+        for (var k = 0; k < 5; k++) {
+            wins[i][j + k][count] = true;
+        }
+        count++;
+    }
+}
+//统计所有竖线赢法
+for (var i = 0; i < 15; i++) {
+    for (var j = 0; j < 11; j++) {
+        for (var k = 0; k < 5; k++) {
+            wins[j + k][i][count] = true;
+        }
+        count++;
+    }
+}
+//统计所有正斜线赢法
+for (var i = 0; i < 11; i++) {
+    for (var j = 0; j < 11; j++) {
+        for (var k = 0; k < 5; k++) {
+            wins[i + k][j + k][count] = true;
+        }
+        count++;
+    }
+}
+//统计所有反斜线赢法
+for (var i = 0; i < 11; i++) {
+    for (var j = 14; j > 3; j--) {
+        for (var k = 0; k < 5; k++) {
+            wins[i + k][j - k][count] = true;
+        }
+        count++;
+    }
+}
+
+//双方赢法统计数组
+var myWin = [];
+var computerWin = [];
+for (var i = 0; i < count; i++) {
+    myWin[i] = 0;
+    computerWin[i] = 0;
 }
 
 context.strokeStyle = '#BFBFBF'
@@ -72,17 +131,29 @@ gobang.addEventListener('click', function (e) {
     var i = Math.floor(x / 30);
     var j = Math.floor(y / 30);
     //判断是否有棋子
-    if(gobangBoard[i][j] == 0) {
+    if (gobangBoard[i][j] == 0) {
         oneStep(i, j, me);
-        if(me) {
+        if (me) {
             gobangBoard[i][j] = 1;
-            console.log(gobangBoard);
-        }else {
+        } else {
             gobangBoard[i][j] = 2;
-            console.log(gobangBoard);
         }
         //换棋子颜色
         me = !me;
+        //落子后对赢法进行更新
+        for (var k = 0; k < count; k++) {
+            //如果第k种赢法在[i][j]这个位置是有子的
+            if (wins[i][j][k]) {
+                myWin[k]++;
+                computerWin[k] = 6;
+                //如果第[k]种赢法已经加到5了
+                if (myWin[k] == 5) {
+                    window.alert('你赢了！');
+                    isGameOver = true;
+                }
+            }
+        }
+
     }
 })
 
