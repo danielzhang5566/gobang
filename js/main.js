@@ -124,8 +124,12 @@ function oneStep(i, j, me) {
     context.fill();
 }
 
-//点击棋盘落棋子
+//我的黑棋落子——点击棋盘落子
 gobang.addEventListener('click', function (e) {
+    //如果游戏结束或者不是我方下棋
+    if (isGameOver || !me) {
+        return;
+    }
     var x = e.offsetX;
     var y = e.offsetY;
     var i = Math.floor(x / 30);
@@ -133,13 +137,7 @@ gobang.addEventListener('click', function (e) {
     //判断是否有棋子
     if (gobangBoard[i][j] == 0) {
         oneStep(i, j, me);
-        if (me) {
-            gobangBoard[i][j] = 1;
-        } else {
-            gobangBoard[i][j] = 2;
-        }
-        //换棋子颜色
-        me = !me;
+        gobangBoard[i][j] = 1;
         //落子后对赢法进行更新
         for (var k = 0; k < count; k++) {
             //如果第k种赢法在[i][j]这个位置是有子的
@@ -153,11 +151,122 @@ gobang.addEventListener('click', function (e) {
                 }
             }
         }
+        //如果游戏没有结束
+        if (!isGameOver) {
+            //换棋子颜色
+            me = !me;
+            //电脑下棋
+            computerAI();
+        }
 
     }
 })
 
+//计算机的白棋落子——自动落子
+function computerAI() {
+    //定义赢法得分，供比较
+    var myScore = [];
+    var comScore = [];
 
+    //定义最高分数以及对应点的坐标
+    var maxScore = 0;
+    var x = 0, y = 0;
+
+    //初始化二维数组
+    for (var i = 0; i < 15; i++) {
+        myScore[i] = [];
+        comScore[i] = [];
+        for (var j = 0; j < 15; j++) {
+            myScore[i][j] = 0;
+            comScore[i][j] = 0;
+        }
+    }
+    //遍历棋盘
+    for (var i = 0; i < 15; i++) {
+        for (var j = 0; j < 15; j++) {
+            if (gobangBoard[i][j] == 0) {
+                for (var k = 0; k < count; k++) {
+                    //如果可行，给该赢法加分
+                    if (wins[i][j][k]) {
+                        //我的赢法加分——黑棋
+                        if (myWin[k] == 1) {
+                            //如果连上1颗子
+                            myScore[i][j] += 200;
+                        } else if (myWin[k] == 2) {
+                            //如果连上2颗子
+                            myScore[i][j] += 400;
+                        } else if (myWin[k] == 3) {
+                            //如果连上3颗子
+                            myScore[i][j] += 3000;
+                        } else if (myWin[k] == 4) {
+                            //如果连上4颗子
+                            myScore[i][j] += 10000;
+                        }
+                        //计算机的赢法加分——白棋
+                        if (computerWin[k] == 1) {
+                            //如果连上1颗子
+                            comScore[i][j] += 220;
+                        } else if (computerWin[k] == 2) {
+                            //如果连上2颗子
+                            comScore[i][j] += 420;
+                        } else if (computerWin[k] == 3) {
+                            //如果连上3颗子
+                            comScore[i][j] += 3200;
+                        } else if (computerWin[k] == 4) {
+                            //如果连上4颗子
+                            comScore[i][j] += 20000;
+                        }
+                    }
+                }
+                //我的最优下法
+                if (myScore[i][j] > maxScore) {
+                    maxScore = myScore[i][j];
+                    x = i;
+                    y = j;
+                } else if (myScore[i][j] == maxScore) {
+                    if (comScore[i][j] > comScore[x][y]) {
+                        x = i;
+                        y = j;
+                    }
+                }
+                //计算机的最优下法
+                if (comScore[i][j] > maxScore) {
+                    maxScore = comScore[i][j];
+                    x = i;
+                    y = j;
+                } else if (comScore[i][j] == maxScore) {
+                    if (myScore[i][j] > myScore[x][y]) {
+                        x = i;
+                        y = j;
+                    }
+                }
+            }
+        }
+    }
+    //让计算机落子
+    oneStep(x, y, false);
+    gobangBoard[x][y] = 2;
+    //落子后对赢法进行更新
+    for (var k = 0; k < count; k++) {
+        //如果第k种赢法在[i][j]这个位置是有子的
+        if (wins[x][y][k]) {
+            computerWin[k]++;
+            myWin[k] = 6;
+            //如果第[k]种赢法已经加到5了
+            if (computerWin[k] == 5) {
+                setTimeout(function(){
+                    window.alert('你输了！');
+                },700);
+                isGameOver = true;
+            }
+        }
+    }
+    //如果游戏没有结束
+    if (!isGameOver) {
+        //换棋子颜色
+        me = !me;
+    }
+}
 
 
 
